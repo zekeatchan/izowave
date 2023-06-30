@@ -1,0 +1,52 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+body {
+  overflow: hidden;
+  background: #222;
+}
+
+img {
+  image-rendering: pixelated;
+}
+
+#game-ui {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.system-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  display: flex;
+  padding: 100px;
+  font-family: 'Verdana';
+  font-size: 10pt;
+  letter-spacing: 2px;
+  color: #aaa;
+  text-align: center;
+  z-index: 3;
+}
+
+.loading-animation {
+  width: 64px;
+  height: 64px;
+  background: url('./loading.gif') center center no-repeat;
+  margin-bottom: 30px;
+}

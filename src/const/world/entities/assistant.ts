@@ -1,0 +1,3 @@
+export const ASSISTANT_TILE_SIZE = [12, 16];
+
+export const ASSISTANT_PATH_BREAKPOINT = 40;
