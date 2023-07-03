@@ -60,6 +60,8 @@ export class Player extends Sprite implements IPlayer {
 
   private isMoving: boolean = false;
 
+  private graphics: Phaser.GameObjects.Graphics;
+
   private assistant: Nullable<IAssistant> = null;
 
   private collisionGroups: TileType[] = [
@@ -100,6 +102,8 @@ export class Player extends Sprite implements IPlayer {
     this.scene.wave.on(WaveEvents.COMPLETE, (number: number) => {
       this.onWaveComplete(number);
     });
+
+    this.graphics = this.scene.add.graphics().setDepth(100000);
   }
 
   public update() {
@@ -244,75 +248,57 @@ export class Player extends Sprite implements IPlayer {
     const friction = this.currentGroundTile?.biome?.friction ?? 1;
     const speed = this.speed / friction;
     const velocity = this.scene.physics.velocityFromAngle(this.direction, speed);
-    const tile = this.handleCollide(this.direction);
+    const nextTile = this.handleCollide(this.direction);
     let stopMoving = false;
 
-    const targets:Array<Vector2D> = this.calculateCoordinates(TILE_META.width);
+    // this.graphics.clear();
+    // this.graphics.lineStyle(1, 0xFF00FF, 1);
+    // this.graphics.beginPath();
+    // const targetVector = this.scene.physics.velocityFromAngle(this.direction, WORLD_COLLIDE_LOOK);
 
-    if (tile) {
-      if (tile.tileType === TileType.BUILDING) {
-        const building = tile as Building;
+    // const targets: Array<Vector2D> = this.calculateCoordinates((bodyRadius) + WORLD_COLLIDE_LOOK);
+    // targets.map((point) => {
+    //   const startX = bodyPosition.x;
+    //   const startY = bodyPosition.y;
+    //   const endX = startX + point.x + targetVector.x;
+    //   const endY = startY + point.y + targetVector.y;
+    //   this.graphics.moveTo(startX, startY);
+    //   this.graphics.lineTo(endX, endY);
+    // });
+
+    // this.graphics.strokePath();
+    // this.graphics.closePath();
+
+    // const key = `${this.directionVector.x}|${this.directionVector.y}`;
+    // const directionIndex = DIRECTIONS[key];
+    // const currentTile = this.scene.level.getTileWithType({ ...positionAtMatrix, z: 1 }, this.collisionGroups);
+    // const buildingTile = currentTile?.tileType === TileType.BUILDING ? currentTile as Building : null;
+    // const wallTile = buildingTile?.variant === BuildingVariant.WALL ? buildingTile as BuildingWall : null;
+
+    if (nextTile) {
+      if (nextTile.tileType === TileType.BUILDING) {
+        const building = nextTile as Building;
         const isWall = building.variant === BuildingVariant.WALL;
 
         if (isWall) {
           const wall = building as BuildingWall;
-          const orientation = wall.orientation
-          const wallOrientation = orientation.split('');
-          const top = Number(wallOrientation[0]);
-          const right = Number(wallOrientation[1]);
-          const bottom = Number(wallOrientation[2]);
-          const left = Number(wallOrientation[3]);
+          // const positionAtWorld = Level.ToWorldPosition({ ...positionAtMatrix, z: 1 });
 
-          const positionAtMatrix = Level.ToMatrixPosition({ x: this.body.position.x, y: this.body.position.y });
-          // const target = this.scene.physics.velocityFromAngle(this.direction, TILE_META.width * 0.5);
-          const normalized = velocity.clone().normalize();
-          const bodyRadius = this.body.width / 2;
-          // const nextPosition = Level.ToMatrixPosition({
-          //   x: this.body.position.x + (normalized.x * bodyRadius) + target.x,
-          //   y: this.body.position.y + (normalized.y * bodyRadius) + target.y
-          // });
-          const positionAtWorld = Level.ToWorldPosition({ ...positionAtMatrix, z: 1 });
-          const currentTile = this.scene.level.getTileWithType({ ...positionAtMatrix, z: 1 }, this.collisionGroups) as BuildingWall;
-
-          if (orientation === BuildingWallOrientation.BLOCK) {
+          if (wall.orientation === BuildingWallOrientation.BLOCK) {
             stopMoving = true;
-          } else if (orientation === BuildingWallOrientation.TOP) {
-            if (this.directionVector.x < 0 || this.directionVector.y > 0) {
-              stopMoving = true;
-            } else {
-              if (currentTile) {
-                if (this.directionVector.y < 0) {
-                  const offset:Vector2D = targets[DIRECTIONS.UP];
-                  const limitY = positionAtWorld.y - offset.y;
-                  const positionTop = Level.ToMatrixPosition({ x: this.body.position.x, y: this.body.position.y - offset.y });
-
-                  if (this.body.position.y <= limitY) {
-                    stopMoving = true;
-                  }
-                  console.log(positionAtMatrix, positionTop);
-                  // console.log(this.body.position.y, positionAtWorld.y, limitY);
-                }
-              }
-              // if (this.directionVector.x > 0 || this.directionVector.y < 0) {
-              //   if (this.body.position.x >= limitX) stopMoving = true;
-              //   if (this.body.position.y <= limitY) stopMoving = true;
-              //   console.log(this.body.position.y, positionAtWorld.y, limitY);
-              // }
-            }
-          } else {
-
           }
 
-
-          // if (top && (velocity.x < 0 || velocity.y > 0)) return tile;
-          // if (right && (velocity.x < 0 || velocity.y < 0)) return tile;
-          // if (bottom && (velocity.x > 0 || velocity.y < 0)) return tile;
-          // if (left && (velocity.x > 0 || velocity.y < 0)) return tile;
+          // stopMoving = this.innerWallCollision(this.directionVector, wall.orientation);
+          stopMoving = this.edgeWallCollision(nextTile as BuildingWall, this.directionVector, wall.orientation);
         } else {
           stopMoving = true;
         }
       }
     }
+
+    // if (wallTile) {
+    //   console.log(wallTile);
+    // }
 
     if (stopMoving) {
       this.setVelocity(0, 0);
@@ -324,13 +310,70 @@ export class Player extends Sprite implements IPlayer {
     this.setVelocity(velocity.x, velocity.y);
   }
 
+  private edgeWallCollision(tile: BuildingWall, direction: Vector2D, orientation: string): boolean {
+    const bodyRadius = this.body.width * 0.5;
+    const bodyPosition: Vector2D = { x: this.body.position.x + (bodyRadius), y: this.body.position.y + (this.body.height * 0.5) };
+    // const positionAtMatrix = Level.ToMatrixPosition({ x: bodyPosition.x, y: bodyPosition.y });
+    const tilePosition = Level.ToWorldPosition({
+      ...tile.positionAtMatrix,
+      z: 0,
+    });
+    const halfTile = { width: TILE_META.width * 0.25, y: TILE_META.height * TILE_META.origin * 0.5 };
+    const topWallPosition = { x: tilePosition.x + halfTile.width, y: tilePosition.y - halfTile.y };
+    const rightWallPosition = { x: tilePosition.x + halfTile.width, y: tilePosition.y + halfTile.y };
+    const bottomWallPosition = { x: tilePosition.x - halfTile.width, y: tilePosition.y + halfTile.y };
+    const leftWallPosition = { x: tilePosition.x - halfTile.width, y: tilePosition.y - halfTile.y };
+
+    const wallOrientation = orientation.split('');
+    const topWall = Number(wallOrientation[0]);
+    const rightWall = Number(wallOrientation[1]);
+    const bottomWall = Number(wallOrientation[2]);
+    const leftWall = Number(wallOrientation[3]);
+    let stopMoving = false;
+
+    if (direction.x < 0) {
+      // leftWall-up
+      if (direction.y < 0) {
+        if (rightWall) {
+          // check if coming from outside wall tile
+          if (rightWallPosition.x < bodyPosition.x && rightWallPosition.y < bodyPosition.y) stopMoving = true;
+        }
+        // leftWall-down
+      } else {
+        if (rightWall) {
+          if (rightWallPosition.x < bodyPosition.x && rightWallPosition.y > bodyPosition.y) stopMoving = true;
+        }
+        if (rightWall) {
+          if (tilePosition.x < bodyPosition.x && tilePosition.y > bodyPosition.y) stopMoving = true;
+        }
+      }
+      // rightWall direction
+    } else if (direction.x > 0) {
+      if (direction.y > 0) {
+        if (leftWall) stopMoving = true;
+      } else {
+        if (bottomWall || leftWall) stopMoving = true;
+      }
+    } else {
+      // up
+      if (direction.y < 0) {
+        if (rightWall || bottomWall) stopMoving = true;
+        // down
+      } else if (direction.y > 0) {
+        if (topWall || leftWall) stopMoving = true;
+      }
+    }
+
+    return stopMoving;
+  }
+
   private calculateCoordinates(radius: number): Array<Vector2D> {
     const widthToHeightRatio = TILE_META.perspective;
     const centerX = 0; // X-coordinate of the circle's center
     const centerY = 0; // Y-coordinate of the circle's center
     const numPoints = 8; // Number of equidistant points
 
-    const coordinates:Array<Vector2D> = [];
+    const coordinates: Array<Vector2D> = [];
 
     for (let i = 0; i < numPoints; i++) {
       const angle = (2 * Math.PI * i) / numPoints; // Calculate the angle for each point

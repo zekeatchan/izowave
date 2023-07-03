@@ -82,7 +82,7 @@ export class Game extends Phaser.Game implements IGame {
       physics: {
         default: 'arcade',
         arcade: {
-          // debug: IS_DEV_MODE,
+          debug: true,
           fps: 60,
           gravity: { y: 0 },
         },
