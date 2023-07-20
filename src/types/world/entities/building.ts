@@ -2,13 +2,11 @@ import Phaser from 'phaser';
 
 import { IWorld } from '~type/world';
 import { IParticlesParent } from '~type/world/effects';
-import { IEnemyTarget } from '~type/world/entities/npc/enemy';
-import { IShotInitiator } from '~type/world/entities/shot';
 import { Vector2D } from '~type/world/level';
 
 import { ILive } from './live';
 
-export interface IBuilding extends Phaser.GameObjects.Image, IEnemyTarget, IParticlesParent, IShotInitiator {
+export interface IBuilding extends Phaser.GameObjects.Image, IParticlesParent {
   readonly scene: IWorld
 
   /**
@@ -141,12 +139,6 @@ export enum BuildingEvents {
 export enum BuildingVariant {
   WALL = 'WALL',
   BLOCK = 'BLOCK',
-  TOWER_FIRE = 'TOWER_FIRE',
-  TOWER_LAZER = 'TOWER_LAZER',
-  TOWER_FROZEN = 'TOWER_FROZEN',
-  GENERATOR = 'GENERATOR',
-  AMMUNITION = 'AMMUNITION',
-  MEDIC = 'MEDIC',
 }
 
 export enum BuildingType {

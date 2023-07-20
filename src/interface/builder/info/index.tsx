@@ -29,20 +29,7 @@ export const ComponentBuilderInfo: React.FC<Props> = ({ variant }) => {
   const [isAllowByTutorial, setAllowByTutorial] = useState(false);
 
   useWorldUpdate(() => {
-    const currentIsAllowByWave = game.world.builder.isBuildingAllowByWave(variant);
-    const currentIsAllowByTutorial = game.world.builder.isBuildingAllowByTutorial(variant);
 
-    setAllowByWave(currentIsAllowByWave);
-    setAllowByTutorial(currentIsAllowByTutorial);
-
-    if (currentIsAllowByWave && currentIsAllowByTutorial) {
-      const currentLimit = game.world.builder.getBuildingLimit(variant);
-
-      setLimit(currentLimit);
-      if (currentLimit) {
-        setExistCount(game.world.getBuildingsByVariant(variant).length);
-      }
-    }
   });
 
   return (

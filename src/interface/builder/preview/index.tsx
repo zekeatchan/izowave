@@ -43,14 +43,10 @@ export const ComponentBuilderPreview: React.FC<Props> = ({
     if (currentIsActive) {
       setNewest(false);
     }
-    setDisallow(
-      !game.world.builder.isBuildingAllowByTutorial(variant)
-      || !game.world.builder.isBuildingAllowByWave(variant),
-    );
   });
 
   useEffect(() => {
-    if (!isDisallow && game.world.wave.number > 1) {
+    if (!isDisallow) {
       setNewest(true);
     }
   }, [isDisallow]);

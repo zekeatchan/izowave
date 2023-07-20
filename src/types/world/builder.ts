@@ -37,24 +37,6 @@ export interface IBuilder extends EventEmitter {
    * @param position - Position at matrix
    */
   addFoundation(position: Vector2D): void
-
-  /**
-   * Get building limit on current wave.
-   * @param variant - Building variant
-   */
-  getBuildingLimit(variant: BuildingVariant): Nullable<number>
-
-  /**
-   * Check is tutorial allow building variant.
-   * @param variant - Building variant
-   */
-  isBuildingAllowByTutorial(variant: BuildingVariant): boolean
-
-  /**
-   * Check is current wave allow building variant.
-   * @param variant - Building variant
-   */
-  isBuildingAllowByWave(variant: BuildingVariant): boolean
 }
 
 export enum BuilderEvents {

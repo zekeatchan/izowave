@@ -1,8 +1,6 @@
 import Phaser from 'phaser';
 
 import { AUDIO_VOLUME, CONTAINER_ID, SETTINGS } from '~const/game';
-import { Analytics } from '~game/analytics';
-import { Tutorial } from '~game/tutorial';
 import { shaders } from '~lib/shaders';
 import { eachEntries } from '~lib/system';
 import { Basic } from '~scene/basic';
@@ -10,19 +8,19 @@ import { Gameover } from '~scene/gameover';
 import { Menu } from '~scene/menu';
 import { Screen } from '~scene/screen';
 import { World } from '~scene/world';
-import { IAnalytics } from '~type/analytics';
 import {
   GameEvents, GameSettings, GameStat, IGame,
 } from '~type/game';
 import { IMenu } from '~type/menu';
 import { IScreen } from '~type/screen';
-import { ITutorial } from '~type/tutorial';
 import { IWorld } from '~type/world';
 
 export class Game extends Phaser.Game implements IGame {
-  readonly tutorial: ITutorial;
+  private _menu: IMenu;
 
-  readonly analytics: IAnalytics;
+  public get menu() { return this._menu; }
+
+  private set menu(v) { this._menu = v; }
 
   private _isStarted: boolean = false;
 
@@ -30,23 +28,11 @@ export class Game extends Phaser.Game implements IGame {
 
   private set isStarted(v) { this._isStarted = v; }
 
-  private _isPaused: boolean = false;
-
-  public get isPaused() { return this._isPaused; }
-
-  private set isPaused(v) { this._isPaused = v; }
-
   private _isFinished: boolean = false;
 
   public get isFinished() { return this._isFinished; }
 
   private set isFinished(v) { this._isFinished = v; }
-
-  private _menu: IMenu;
-
-  public get menu() { return this._menu; }
-
-  private set menu(v) { this._menu = v; }
 
   private _screen: IScreen;
 
@@ -80,24 +66,21 @@ export class Game extends Phaser.Game implements IGame {
         mode: Phaser.Scale.RESIZE,
       },
       physics: {
-        default: 'arcade',
-        arcade: {
+        default: 'matter',
+        matter: {
           debug: true,
-          fps: 60,
           gravity: { y: 0 },
+          enableSleeping: true,
         },
       },
     });
 
-    this.tutorial = new Tutorial();
-    this.analytics = new Analytics();
-
     this.readSettings();
 
     this.events.on(Phaser.Core.Events.READY, () => {
-      this.screen = <Screen> this.scene.keys.SCREEN;
-      this.menu = <Menu> this.scene.keys.MENU;
-      this.world = <World> this.scene.keys.WORLD;
+      this.screen = <Screen> this.scene.keys.SCREEN; // in game UI
+      this.menu = <Menu> this.scene.keys.MENU; // main menu
+      this.world = <World> this.scene.keys.WORLD; // game world
 
       this.sound.setVolume(AUDIO_VOLUME);
 
@@ -133,13 +116,6 @@ export class Game extends Phaser.Game implements IGame {
   }
 
   public startGame() {
-    this.isFinished = false;
-    this.isStarted = true;
-
-    if (!this.isSettingEnabled(GameSettings.TUTORIAL)) {
-      this.tutorial.disable();
-    }
-
     this.world.start();
 
     this.scene.systemScene.scene.stop(this.menu);
@@ -155,12 +131,8 @@ export class Game extends Phaser.Game implements IGame {
   }
 
   public stopGame() {
-    this.isStarted = false;
-
     this.scene.systemScene.scene.stop(this.menu);
     this.scene.systemScene.scene.stop(this.screen);
-
-    this.tutorial.disable();
 
     if (!IS_DEV_MODE) {
       delete window.onbeforeunload;
@@ -168,10 +140,6 @@ export class Game extends Phaser.Game implements IGame {
   }
 
   public restartGame() {
-    if (this.isStarted) {
-      this.stopGame();
-    }
-
     this.world.scene.restart();
 
     this.world.events.once(Phaser.Scenes.Events.CREATE, () => {
@@ -182,8 +150,6 @@ export class Game extends Phaser.Game implements IGame {
   public finishGame() {
     this.stopGame();
 
-    this.isFinished = true;
-
     const record = this.getRecordStat();
     const stat = this.getCurrentStat();
 
@@ -192,19 +158,6 @@ export class Game extends Phaser.Game implements IGame {
     }
 
     this.events.emit(GameEvents.FINISH, stat, record);
-
-    this.analytics.track({
-      world: this.world,
-      success: false,
-    });
-  }
-
-  public getDifficultyMultiplier() {
-    switch (this.settings[GameSettings.DIFFICULTY]) {
-      case 'easy': return 0.8;
-      case 'hard': return 1.3;
-      default: return 1.0;
-    }
   }
 
   public updateSetting(key: GameSettings, value: string) {
@@ -247,10 +200,10 @@ export class Game extends Phaser.Game implements IGame {
 
   private getCurrentStat() {
     return {
-      waves: this.world.wave.number - 1,
+      waves: 0,
       kills: this.world.player.kills,
       level: this.world.player.level,
-      lived: this.world.getTime() / 1000 / 60,
+      lived: 1,
     } as GameStat;
   }
 

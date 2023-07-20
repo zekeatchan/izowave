@@ -84,7 +84,7 @@ export const ComponentMenu: React.FC = () => {
   return (
     <Wrapper>
       <Sidebar>
-        <Logotype>IZOWAVE</Logotype>
+        <Logotype>Chirper World</Logotype>
         <Menu>
           {menuItems.map((item) => (
             <Menu.Item

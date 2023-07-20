@@ -57,6 +57,7 @@ export function registerSpriteAssets(files: AssetsSource, params: AssetsSpritePa
 }
 
 export function getAssetsPack() {
+  console.log(ASSETS_PACK);
   return ASSETS_PACK;
 }
 

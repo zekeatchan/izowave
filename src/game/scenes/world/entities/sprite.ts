@@ -2,11 +2,9 @@ import Phaser from 'phaser';
 
 import { WORLD_COLLIDE_LOOK } from '~const/world';
 import { equalPositions } from '~lib/utils';
-import { Particles } from '~scene/world/effects';
 import { Level } from '~scene/world/level';
 import { Live } from '~scene/world/live';
 import { IWorld } from '~type/world';
-import { ParticlesType } from '~type/world/effects';
 import { ILive, LiveEvents } from '~type/world/entities/live';
 import { ISprite, SpriteData } from '~type/world/entities/sprite';
 import { BiomeType, TileType, Vector2D } from '~type/world/level';
@@ -15,10 +13,10 @@ import { Building } from './building';
 import { BuildingVariant } from '~type/world/entities/building';
 import { BuildingWall } from './building/variants/wall';
 
-export class Sprite extends Phaser.Physics.Arcade.Sprite implements ISprite {
+export class Sprite extends Phaser.Physics.Matter.Sprite implements ISprite {
   readonly scene: IWorld;
 
-  readonly body: Phaser.Physics.Arcade.Body;
+  readonly body: MatterJS.BodyType;
 
   readonly live: ILive;
 
@@ -48,7 +46,7 @@ export class Sprite extends Phaser.Physics.Arcade.Sprite implements ISprite {
       z: 0,
     });
 
-    super(scene, positionAtWorld.x, positionAtWorld.y, texture, frame);
+    super(scene.matter.world, positionAtWorld.x, positionAtWorld.y, texture, frame);
     scene.add.existing(this);
 
     this.positionAtMatrix = positionAtMatrix;
@@ -57,8 +55,8 @@ export class Sprite extends Phaser.Physics.Arcade.Sprite implements ISprite {
 
     this.addHealthIndicator();
 
-    this.scene.physics.world.enable(this, Phaser.Physics.Arcade.DYNAMIC_BODY);
-    this.setPushable(false);
+    // this.scene.physics.world.enable(this, Phaser.Physics.Matter.DYNAMIC_BODY);
+    // this.setPushable(false);
 
     this.live.on(LiveEvents.DAMAGE, () => {
       this.onDamage();
@@ -151,7 +149,7 @@ export class Sprite extends Phaser.Physics.Arcade.Sprite implements ISprite {
 
   public getCorners() {
     const count = 8;
-    const r = this.body.width / 2;
+    const r = this.body.circleRadius / 2;
     const l = Phaser.Math.PI2 / count;
 
     const points: Vector2D[] = [];
@@ -194,19 +192,6 @@ export class Sprite extends Phaser.Physics.Arcade.Sprite implements ISprite {
     if (!this.visible) {
       return;
     }
-
-    new Particles(this, {
-      type: ParticlesType.BIT,
-      duration: 250,
-      params: {
-        follow: this,
-        lifespan: { min: 100, max: 250 },
-        scale: { start: 1.0, end: 0.5 },
-        speed: 100,
-        maxParticles: 6,
-        tint: 0xdd1e1e,
-      },
-    });
   }
 
   public onDead() {

@@ -4,26 +4,19 @@ import { CONTROL_KEY } from '~const/controls';
 import { DIFFICULTY } from '~const/world/difficulty';
 import { PLAYER_TILE_SIZE, PLAYER_MOVE_DIRECTIONS, PLAYER_MOVE_ANIMATIONS, DIRECTIONS } from '~const/world/entities/player';
 import { LEVEL_MAP_VISITED_TILE_TINT, TILE_META } from '~const/world/level';
-import { Chest } from '~entity/chest';
-import { Assistant } from '~entity/npc/variants/assistant';
 import { Sprite } from '~entity/sprite';
 import { registerAudioAssets, registerSpriteAssets } from '~lib/assets';
 import { aroundPosition, calcGrowth } from '~lib/utils';
 import { NoticeType } from '~type/screen';
 import { IWorld } from '~type/world';
-import { IAssistant } from '~type/world/entities/npc/assistant';
-import { IEnemy } from '~type/world/entities/npc/enemy';
 import {
   PlayerTexture, MovementDirection, PlayerAudio, PlayerData, IPlayer,
 } from '~type/world/entities/player';
 import { BiomeType, TileType, Vector2D } from '~type/world/level';
-import { ITile } from '~type/world/level/tile-matrix';
-import { WaveEvents } from '~type/world/wave';
 import { Building } from './building';
 import { BuildingVariant, BuildingWallOrientation } from '~type/world/entities/building';
 import { BuildingWall } from './building/variants/wall';
 import { Level } from '../level';
-import { WORLD_COLLIDE_LOOK } from '~const/world';
 
 export class Player extends Sprite implements IPlayer {
   private _level: number = 1;
@@ -62,14 +55,13 @@ export class Player extends Sprite implements IPlayer {
 
   private graphics: Phaser.GameObjects.Graphics;
 
-  private assistant: Nullable<IAssistant> = null;
-
   private collisionGroups: TileType[] = [
     TileType.MAP,
     TileType.BUILDING,
-    TileType.CHEST,
     TileType.TREE,
   ];
+
+  private COLLISION_RADIUS: number = 3;
 
   constructor(scene: IWorld, data: PlayerData) {
     super(scene, {
@@ -82,25 +74,18 @@ export class Player extends Sprite implements IPlayer {
     this.registerKeyboard();
     this.registerAnimations();
 
-    // this.addAssistant();
-
-    this.body.setCircle(3, 5, 12);
+    this.setBody({
+      type: 'circle',
+      radius: this.COLLISION_RADIUS,
+      x: 5,
+      y: 12,
+    });
     this.setScale(2.0);
     this.setOrigin(0.5, 0.75);
 
     this.setTilesGroundCollision(true);
     this.setTilesCollision(this.collisionGroups, (tile) => {
-      if (tile instanceof Chest) {
-        tile.open();
-      }
-    });
 
-    this.scene.physics.add.collider(this, this.scene.entityGroups.enemies, (_, enemy: IEnemy) => {
-      enemy.attack(this);
-    });
-
-    this.scene.wave.on(WaveEvents.COMPLETE, (number: number) => {
-      this.onWaveComplete(number);
     });
 
     this.graphics = this.scene.add.graphics().setDepth(100000);
@@ -177,30 +162,8 @@ export class Player extends Sprite implements IPlayer {
     });
   }
 
-  private addAssistant() {
-    const positionAtMatrix = aroundPosition(this.positionAtMatrix, 1).find((spawn) => {
-      const tileGround = this.scene.level.getTile({ ...spawn, z: 0 });
-
-      return Boolean(tileGround);
-    });
-
-    this.assistant = new Assistant(this.scene, {
-      positionAtMatrix: positionAtMatrix || this.positionAtMatrix,
-    });
-
-    this.assistant.upgrade(this.level);
-
-    this.assistant.on(Phaser.Scenes.Events.DESTROY, () => {
-      this.assistant = null;
-    });
-  }
-
   private addLevelProgress(count: number) {
     this.level += count;
-
-    if (this.assistant) {
-      this.assistant.upgrade(this.level);
-    }
 
     const maxHealth = calcGrowth(
       DIFFICULTY.PLAYER_HEALTH,
@@ -215,22 +178,6 @@ export class Player extends Sprite implements IPlayer {
     this.scene.game.screen.notice(NoticeType.INFO, 'LEVEL UP');
   }
 
-  private onWaveComplete(number: number) {
-    if (this.assistant) {
-      this.assistant.live.heal();
-    } else {
-      this.addAssistant();
-    }
-
-    const experience = calcGrowth(
-      DIFFICULTY.WAVE_EXPERIENCE,
-      DIFFICULTY.WAVE_EXPERIENCE_GROWTH,
-      number,
-    );
-
-    this.giveExperience(experience);
-  }
-
   private registerKeyboard() {
     this.movementKeys = <Record<string, Phaser.Input.Keyboard.Key>>this.scene.input.keyboard.addKeys(
       CONTROL_KEY.MOVEMENT,
@@ -240,7 +187,7 @@ export class Player extends Sprite implements IPlayer {
   private updateVelocity() {
     if (!this.isMoving) {
       this.setVelocity(0, 0);
-      this.body.setImmovable(true);
+      this.setStatic(true);
 
       return;
     }
@@ -250,30 +197,6 @@ export class Player extends Sprite implements IPlayer {
     const velocity = this.scene.physics.velocityFromAngle(this.direction, speed);
     const nextTile = this.handleCollide(this.direction);
     let stopMoving = false;
-
-    // this.graphics.clear();
-    // this.graphics.lineStyle(1, 0xFF00FF, 1);
-    // this.graphics.beginPath();
-    // const targetVector = this.scene.physics.velocityFromAngle(this.direction, WORLD_COLLIDE_LOOK);
-
-    // const targets: Array<Vector2D> = this.calculateCoordinates((bodyRadius) + WORLD_COLLIDE_LOOK);
-    // targets.map((point) => {
-    //   const startX = bodyPosition.x;
-    //   const startY = bodyPosition.y;
-    //   const endX = startX + point.x + targetVector.x;
-    //   const endY = startY + point.y + targetVector.y;
-    //   this.graphics.moveTo(startX, startY);
-    //   this.graphics.lineTo(endX, endY);
-    // });
-
-    // this.graphics.strokePath();
-    // this.graphics.closePath();
-
-    // const key = `${this.directionVector.x}|${this.directionVector.y}`;
-    // const directionIndex = DIRECTIONS[key];
-    // const currentTile = this.scene.level.getTileWithType({ ...positionAtMatrix, z: 1 }, this.collisionGroups);
-    // const buildingTile = currentTile?.tileType === TileType.BUILDING ? currentTile as Building : null;
-    // const wallTile = buildingTile?.variant === BuildingVariant.WALL ? buildingTile as BuildingWall : null;
 
     if (nextTile) {
       if (nextTile.tileType === TileType.BUILDING) {
@@ -296,23 +219,18 @@ export class Player extends Sprite implements IPlayer {
       }
     }
 
-    // if (wallTile) {
-    //   console.log(wallTile);
-    // }
-
     if (stopMoving) {
       this.setVelocity(0, 0);
-      this.body.setImmovable(true);
+      this.setStatic(true);
       return;
     }
 
-    this.body.setImmovable(false);
+    this.setStatic(false);
     this.setVelocity(velocity.x, velocity.y);
   }
 
   private edgeWallCollision(tile: BuildingWall, direction: Vector2D, orientation: string): boolean {
-    const bodyRadius = this.body.width * 0.5;
-    const bodyPosition: Vector2D = { x: this.body.position.x + (bodyRadius), y: this.body.position.y + (this.body.height * 0.5) };
+    const bodyPosition: Vector2D = { x: this.body.position.x + this.COLLISION_RADIUS, y: this.body.position.y + this.COLLISION_RADIUS };
     // const positionAtMatrix = Level.ToMatrixPosition({ x: bodyPosition.x, y: bodyPosition.y });
     const tilePosition = Level.ToWorldPosition({
       ...tile.positionAtMatrix,

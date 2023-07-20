@@ -28,18 +28,6 @@ export class Basic extends Phaser.Scene implements IScene {
 
     this.scene.bringToTop();
 
-    this.input.keyboard.on(CONTROL_KEY.PAUSE, () => {
-      if (this.game.isFinished) {
-        this.game.restartGame();
-      } else if (this.game.isStarted) {
-        if (this.game.isPaused) {
-          this.game.resumeGame();
-        } else {
-          this.game.pauseGame();
-        }
-      }
-    });
-
     removeLoading();
 
     this.game.events.on(GameEvents.FINISH, (stat: GameStat, record: Nullable<GameStat>) => {

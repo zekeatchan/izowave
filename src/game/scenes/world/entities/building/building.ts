@@ -6,7 +6,6 @@ import { BUILDING_MAX_UPGRADE_LEVEL } from '~const/world/entities/building';
 import { LEVEL_BUILDING_PATH_COST, TILE_META } from '~const/world/level';
 import { registerAudioAssets, registerSpriteAssets } from '~lib/assets';
 import { calcGrowth } from '~lib/utils';
-import { Effect } from '~scene/world/effects';
 import { Hexagon } from '~scene/world/hexagon';
 import { Level } from '~scene/world/level';
 import { Live } from '~scene/world/live';
@@ -15,7 +14,6 @@ import { NoticeType } from '~type/screen';
 import { TutorialStep } from '~type/tutorial';
 import { IWorld, WorldEvents } from '~type/world';
 import { BuilderEvents } from '~type/world/builder';
-import { EffectTexture } from '~type/world/effects';
 import {
   BuildingActionsParams, BuildingData, BuildingEvents, BuildingAudio,
   BuildingTexture, BuildingVariant, BuildingParam, BuildingControl,
@@ -166,16 +164,12 @@ export class Building extends Phaser.GameObjects.Image implements IBuilding, ITi
     if (!this.actions?.pause) {
       return;
     }
-
-    this.nextActionTimestamp = this.scene.getTime() + this.getActionsPause();
   }
 
   public isAllowAction() {
     if (!this.actions?.pause) {
       return true;
     }
-
-    return (this.nextActionTimestamp < this.scene.getTime());
   }
 
   public getInfo() {
@@ -233,7 +227,7 @@ export class Building extends Phaser.GameObjects.Image implements IBuilding, ITi
   }
 
   private isAllowUpgrade() {
-    return (this.upgradeLevel < BUILDING_MAX_UPGRADE_LEVEL && !this.scene.wave.isGoing);
+    return (this.upgradeLevel < BUILDING_MAX_UPGRADE_LEVEL);
   }
 
   /**
@@ -241,14 +235,6 @@ export class Building extends Phaser.GameObjects.Image implements IBuilding, ITi
    */
   private upgrade() {
     if (!this.isAllowUpgrade()) {
-      return;
-    }
-
-    const waveAllowed = this.getWaveAllowUpgrade();
-
-    if (waveAllowed > this.scene.wave.number) {
-      this.scene.game.screen.notice(NoticeType.ERROR, `UPGRADE WILL BE AVAILABLE ON ${waveAllowed} WAVE`);
-
       return;
     }
 
@@ -273,40 +259,16 @@ export class Building extends Phaser.GameObjects.Image implements IBuilding, ITi
 
     this.scene.game.sound.play(BuildingAudio.UPGRADE);
     this.scene.game.screen.notice(NoticeType.INFO, 'BUILDING UPGRADED');
-
-    this.scene.game.tutorial.end(TutorialStep.UPGRADE_BUILDING);
-  }
-
-  private getWaveAllowUpgrade() {
-    return (this.getMeta().AllowByWave || 1) + this.upgradeLevel;
   }
 
   private onDamage() {
     if (!this.visible) {
       return;
     }
-
-    new Effect(this.scene, {
-      texture: EffectTexture.DAMAGE,
-      position: this,
-      rate: 14,
-    });
   }
 
   private onDead() {
     this.scene.game.screen.notice(NoticeType.WARN, `${this.getMeta().Name} HAS BEEN DESTROYED`);
-
-    if (this.visible) {
-      new Effect(this.scene, {
-        texture: EffectTexture.SMOKE,
-        audio: BuildingAudio.DEAD,
-        position: {
-          x: this.x,
-          y: this.y + TILE_META.height * 0.5,
-        },
-        rate: 18,
-      });
-    }
 
     this.destroy();
   }
@@ -456,18 +418,6 @@ export class Building extends Phaser.GameObjects.Image implements IBuilding, ITi
   }
 
   private destroyBuilding() {
-    if (this.visible) {
-      new Effect(this.scene, {
-        texture: EffectTexture.SMOKE,
-        audio: BuildingAudio.REMOVE,
-        position: {
-          x: this.x,
-          y: this.y + TILE_META.height * 0.5,
-        },
-        rate: 18,
-      });
-    }
-
     this.destroy();
   }
 }

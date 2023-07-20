@@ -1,14 +1,13 @@
 import Phaser from 'phaser';
 
 import { IWorld } from '~type/world';
-import { IParticlesParent } from '~type/world/effects';
 import { ILive } from '~type/world/entities/live';
 import { TileType, Vector2D } from '~type/world/level';
 import { ITile } from '~type/world/level/tile-matrix';
 
-export interface ISprite extends Phaser.Physics.Arcade.Sprite, IParticlesParent {
+export interface ISprite extends Phaser.Physics.Matter.Sprite {
   readonly scene: IWorld
-  readonly body: Phaser.Physics.Arcade.Body
+  readonly body: MatterJS.BodyType
 
   /**
    * Health management.

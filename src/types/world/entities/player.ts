@@ -1,9 +1,8 @@
 import { ILive } from '~type/world/entities/live';
-import { IEnemyTarget } from '~type/world/entities/npc/enemy';
 import { ISprite } from '~type/world/entities/sprite';
 import { Vector2D } from '~type/world/level';
 
-export interface IPlayer extends ISprite, IEnemyTarget {
+export interface IPlayer extends ISprite {
   /**
    * Total number of killed enemies.
    */

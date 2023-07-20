@@ -7,6 +7,11 @@ import {
 } from '~type/world/level';
 
 export const TILE_META: TileMeta = {
+  // width: 128,
+  // height: 64,
+  // origin: 32,
+  // perspective: 0.5,
+  // deg: 30,
   width: 42,
   height: 48,
   origin: 0.25,

@@ -1,9 +1,7 @@
 import Phaser from 'phaser';
 
-import { IAnalytics } from '~type/analytics';
 import { IMenu } from '~type/menu';
 import { IScreen } from '~type/screen';
-import { ITutorial } from '~type/tutorial';
 import { IWorld } from '~type/world';
 
 export interface IGame extends Phaser.Game {
@@ -23,29 +21,14 @@ export interface IGame extends Phaser.Game {
   readonly menu: IMenu
 
   /**
-   * Game is paused.
-   */
-  readonly isPaused: boolean
-
-  /**
-   * Game is finished.
-   */
+ * Game is finished.
+ */
   readonly isFinished: boolean
 
   /**
    * Game is started.
    */
   readonly isStarted: boolean
-
-  /**
-   * Analytics manager.
-   */
-  readonly analytics: IAnalytics
-
-  /**
-   * Tutorial manager.
-   */
-  readonly tutorial: ITutorial
 
   /**
    * Game settings.
@@ -81,11 +64,6 @@ export interface IGame extends Phaser.Game {
    * Finish game.
    */
   finishGame(): void
-
-  /**
-   * Get difficylty multiplier by settings.
-   */
-  getDifficultyMultiplier(): number
 
   /**
    * Set game settings value.

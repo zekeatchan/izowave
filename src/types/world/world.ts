@@ -4,18 +4,12 @@ import { IGame, IScene } from '~type/game';
 import { IBuilder } from '~type/world/builder';
 import { ParticlesList } from '~type/world/effects';
 import { BuildingVariant, IBuilding } from '~type/world/entities/building';
-import { EnemyVariant, IEnemy } from '~type/world/entities/npc/enemy';
+// import { EnemyVariant, IEnemy } from '~type/world/entities/npc/enemy';
 import { IPlayer } from '~type/world/entities/player';
 import { ILevel, Vector2D } from '~type/world/level';
-import { IWave } from '~type/world/wave';
 
 export interface IWorld extends IScene {
   readonly game: IGame
-
-  /**
-   * Wave.
-   */
-  readonly wave: IWave
 
   /**
    * Player.
@@ -46,43 +40,6 @@ export interface IWorld extends IScene {
    * Start world.
    */
   start(): void
-
-  /**
-   * Get lifecyle time.
-   */
-  getTime(): number
-
-  /**
-   * Get game lifecyle pause state.
-   */
-  isTimePaused(): boolean
-
-  /**
-   * Set game lifecyle pause state.
-   * @param state - Pause state
-   */
-  setTimePause(state: boolean): void
-
-  /**
-   * Get list of buildings
-   */
-  getBuildings(): IBuilding[]
-
-  /**
-   * Get list of buildings with a specific variant.
-   * @param variant - Varaint
-   */
-  getBuildingsByVariant(variant: BuildingVariant): IBuilding[]
-
-  /**
-   * Get list of enemies
-   */
-  getEnemies(): IEnemy[]
-
-  /**
-   * Spawn enemy in random position.
-   */
-  spawnEnemy(variant: EnemyVariant): Nullable<IEnemy>
 
   /**
    * Show hint on world.
