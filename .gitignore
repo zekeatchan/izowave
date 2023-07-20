@@ -5,3 +5,4 @@ dist/
 .DS_Store
 .psd
 TODO.md
+src/types/world/entities/shot.ts
